@@ -1,7 +1,7 @@
 // src/app/page.tsx
 'use client'; // Indique que ce composant est côté client
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // Ajoutez useEffect
 import useSpeechRecognition from '../hooks/useSpeechRecognition';
 
 export default function Home() {
@@ -24,6 +24,11 @@ export default function Home() {
       setEtapeActuelle((prev) => (prev > 1 ? prev - 1 : prev));
     }
   };
+
+  // Appeler handleVoiceCommand chaque fois que le transcript change
+  useEffect(() => {
+    handleVoiceCommand();
+  }, [transcript]); // Déclenché lorsque le transcript est mis à jour
 
   return (
     <div className="flex min-h-screen bg-gray-100 p-8">
