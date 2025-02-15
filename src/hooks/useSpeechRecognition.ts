@@ -1,14 +1,6 @@
 // hooks/useSpeechRecognition.ts
 import { useEffect, useState } from "react";
 
-// Déclaration des types pour SpeechRecognition (si nécessaire)
-declare global {
-  interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
-  }
-}
-
 const useSpeechRecognition = () => {
   const [transcript, setTranscript] = useState(""); // Texte transcrit
   const [isListening, setIsListening] = useState(false); // État de l'écoute
@@ -46,7 +38,7 @@ const useSpeechRecognition = () => {
     };
 
     // Gérer les erreurs
-    recognition.onerror = (event) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error("Erreur de reconnaissance vocale:", event.error);
       setIsListening(false); // Arrêter l'écoute en cas d'erreur
     };
