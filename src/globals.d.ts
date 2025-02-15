@@ -1,12 +1,12 @@
 // globals.d.ts
-interface SpeechRecognitionErrorEvent extends Event {
-  error: string;
-  message: string;
-}
-
 interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
   resultIndex: number;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message: string;
 }
 
 interface SpeechRecognition extends EventTarget {
@@ -17,14 +17,17 @@ interface SpeechRecognition extends EventTarget {
   stop(): void;
   onresult: (event: SpeechRecognitionEvent) => void;
   onerror: (event: SpeechRecognitionErrorEvent) => void;
-  onend: () => void; // Ajoutez cette ligne
+  onend: () => void;
 }
 
+// Déclarer les propriétés SpeechRecognition et webkitSpeechRecognition
 interface Window {
   SpeechRecognition: {
     new (): SpeechRecognition;
+    prototype: SpeechRecognition;
   };
   webkitSpeechRecognition: {
     new (): SpeechRecognition;
+    prototype: SpeechRecognition;
   };
 }

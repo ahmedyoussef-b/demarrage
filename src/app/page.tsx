@@ -7,7 +7,7 @@ import useSpeechSynthesis from '../hooks/useSpeechSynthesis';
 
 export default function Home() {
   const [etapeActuelle, setEtapeActuelle] = useState(1);
-  const { transcript, isListening, startListening, stopListening } = useSpeechRecognition();
+  const { transcript, isListening, startListening, stopListening, error } = useSpeechRecognition();
   const { speak } = useSpeechSynthesis();
 
   // Mémoriser le tableau etapes pour éviter qu'il soit recréé à chaque rendu
@@ -31,16 +31,6 @@ export default function Home() {
           "Ouvrir la vanne de remplissage.",
           "Surveiller le niveau d'eau jusqu'à atteindre le niveau requis.",
           "Fermer la vanne de remplissage.",
-        ],
-      },
-      {
-        id: 3,
-        titre: "Conditions d'armement",
-        description: "Vérifiez les conditions d'armement de la chaudière.",
-        sousEtapes: [
-          "Vérifier les capteurs de sécurité.",
-          "Activer les systèmes de contrôle.",
-          "Confirmer l'état des vannes.",
         ],
       },
       // Ajoutez d'autres étapes ici...
@@ -75,6 +65,11 @@ export default function Home() {
     <div className="flex min-h-screen bg-gray-100 p-8">
       <div className="w-full max-w-2xl mx-auto bg-white p-6 rounded-lg shadow">
         <h1 className="text-2xl font-bold mb-4">Copilote de démarrage de centrale</h1>
+        {error && (
+          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+            Erreur : {error === 'not-allowed' ? "Accès au microphone refusé. Veuillez autoriser l'accès au microphone." : error}
+          </div>
+        )}
         <div className="mb-6">
           <h2 className="text-xl font-semibold">{etapes[etapeActuelle - 1].titre}</h2>
           <p className="mt-2 text-gray-700">{etapes[etapeActuelle - 1].description}</p>
