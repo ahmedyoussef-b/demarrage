@@ -20,10 +20,12 @@ export default function TestSpeech() {
 
                 utterance.onstart = () => {
                     setMessage("Lecture en cours...");
+                    console.log("Lecture démarrée");
                 };
 
                 utterance.onend = () => {
                     setMessage("Lecture terminée.");
+                    console.log("Lecture terminée");
                 };
 
                 utterance.onerror = (event) => {
@@ -37,6 +39,7 @@ export default function TestSpeech() {
                 }, 100); // Délai de 100 ms
             } else {
                 setMessage("L'API SpeechSynthesis n'est pas prise en charge sur cet appareil.");
+                console.error("L'API SpeechSynthesis n'est pas prise en charge sur cet appareil.");
             }
         } catch (error) {
             console.error("Erreur lors de la lecture audio :", error);
