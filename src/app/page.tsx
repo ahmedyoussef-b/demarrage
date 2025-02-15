@@ -1,22 +1,54 @@
 // src/app/page.tsx
 'use client'; // Indique que ce composant est côté client
 
-import { useState, useEffect, useCallback } from 'react'; // Ajoutez useCallback
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import useSpeechRecognition from '../hooks/useSpeechRecognition';
+import useSpeechSynthesis from '../hooks/useSpeechSynthesis';
 
 export default function Home() {
   const [etapeActuelle, setEtapeActuelle] = useState(1);
   const { transcript, isListening, startListening, stopListening } = useSpeechRecognition();
+  const { speak } = useSpeechSynthesis();
 
-  const etapes = [
-    { id: 1, titre: "Préparation de la chaudière", description: "Suivez les étapes pour préparer la chaudière." },
-    { id: 2, titre: "Remplissage de la chaudière", description: "Remplissez la chaudière selon les instructions." },
-    { id: 3, titre: "Conditions d'armement", description: "Vérifiez les conditions d'armement de la chaudière." },
-    { id: 4, titre: "Sécurité chaudière (FSE)", description: "Assurez-vous que toutes les conditions de sécurité sont remplies." },
-    { id: 5, titre: "Conditions de contournement", description: "Vérifiez les conditions de contournement." },
-  ];
+  // Mémoriser le tableau etapes pour éviter qu'il soit recréé à chaque rendu
+  const etapes = useMemo(
+    () => [
+      {
+        id: 1,
+        titre: "Préparation de la chaudière",
+        description: "Suivez les étapes pour préparer la chaudière.",
+        sousEtapes: [
+          "Vérifier l'état de la chaudière.",
+          "Ouvrir les vannes d'alimentation en eau.",
+          "Vérifier les niveaux de pression.",
+        ],
+      },
+      {
+        id: 2,
+        titre: "Remplissage de la chaudière",
+        description: "Remplissez la chaudière selon les instructions.",
+        sousEtapes: [
+          "Ouvrir la vanne de remplissage.",
+          "Surveiller le niveau d'eau jusqu'à atteindre le niveau requis.",
+          "Fermer la vanne de remplissage.",
+        ],
+      },
+      {
+        id: 3,
+        titre: "Conditions d'armement",
+        description: "Vérifiez les conditions d'armement de la chaudière.",
+        sousEtapes: [
+          "Vérifier les capteurs de sécurité.",
+          "Activer les systèmes de contrôle.",
+          "Confirmer l'état des vannes.",
+        ],
+      },
+      // Ajoutez d'autres étapes ici...
+    ],
+    [] // Aucune dépendance, le tableau est constant
+  );
 
-  // Gérer les commandes vocales avec useCallback
+  // Gérer les commandes vocales
   const handleVoiceCommand = useCallback(() => {
     if (transcript.includes('suivant')) {
       setEtapeActuelle((prev) => (prev < etapes.length ? prev + 1 : prev));
@@ -25,10 +57,19 @@ export default function Home() {
     }
   }, [transcript, etapes.length]);
 
+  // Lire à haute voix l'étape actuelle et ses sous-étapes
+  useEffect(() => {
+    if (etapeActuelle) {
+      const etape = etapes[etapeActuelle - 1];
+      const texteAVoix = `Étape ${etape.id}: ${etape.titre}. ${etape.description}. Sous-étapes: ${etape.sousEtapes.join('. ')}`;
+      speak(texteAVoix);
+    }
+  }, [etapeActuelle, etapes, speak]);
+
   // Appeler handleVoiceCommand chaque fois que le transcript change
   useEffect(() => {
     handleVoiceCommand();
-  }, [transcript, handleVoiceCommand]); // Ajoutez handleVoiceCommand aux dépendances
+  }, [transcript, handleVoiceCommand]);
 
   return (
     <div className="flex min-h-screen bg-gray-100 p-8">
@@ -37,6 +78,16 @@ export default function Home() {
         <div className="mb-6">
           <h2 className="text-xl font-semibold">{etapes[etapeActuelle - 1].titre}</h2>
           <p className="mt-2 text-gray-700">{etapes[etapeActuelle - 1].description}</p>
+          <div className="mt-4">
+            <h3 className="text-lg font-medium">Sous-étapes :</h3>
+            <ul className="list-disc list-inside mt-2">
+              {etapes[etapeActuelle - 1].sousEtapes.map((sousEtape, index) => (
+                <li key={index} className="text-gray-600">
+                  {sousEtape}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
         <div className="flex justify-between">
           <button
