@@ -43,6 +43,14 @@ const useSpeechRecognition = () => {
       setIsListening(false); // Arrêter l'écoute en cas d'erreur
     };
 
+    // Redémarrer la reconnaissance vocale si elle s'arrête
+    recognition.onend = () => {
+      if (isListening) {
+        console.log("Redémarrage de la reconnaissance vocale...");
+        recognition.start();
+      }
+    };
+
     // Démarrer ou arrêter la reconnaissance vocale en fonction de l'état
     if (isListening) {
       recognition.start();
