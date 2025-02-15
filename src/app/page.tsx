@@ -1,171 +1,177 @@
-// src/app/page.tsx
-'use client'; // Indique que ce composant est côté client
+'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import useSpeechRecognition from '../hooks/useSpeechRecognition';
 import useSpeechSynthesis from '../hooks/useSpeechSynthesis';
+import etapes  from '../data/etapes';
+import EtapeComponent from '../components/EtapeComponent';
+import NavigationButtons from '../components/NavigationButtons';
+import VoiceRecognition from '../components/VoiceRecognition';
 
 export default function Home() {
   const [etapeActuelle, setEtapeActuelle] = useState(1);
+  const [sousEtapeActuelle, setSousEtapeActuelle] = useState<number | null>(null);
+  const [sousEtapesActivees, setSousEtapesActivees] = useState<number[]>([]);
+  const [lectureEnCours, setLectureEnCours] = useState(false);
+  const [applicationDemarree, setApplicationDemarree] = useState(false);
+  const [microphoneDisponible, setMicrophoneDisponible] = useState(false);
+
   const { transcript, isListening, startListening, stopListening, error } = useSpeechRecognition();
   const { speak } = useSpeechSynthesis();
 
-  // Définir le tableau des étapes
-  const etapes = useMemo(
-    () => [
-      {
-        id: 1,
-        titre: "Préparation de la chaudière",
-        description: "Suivez les étapes pour préparer la chaudière.",
-        sousEtapes: [
-          "Mettre la turbine à gaz (TG) en service (70 à 80 MW de préférence).",
-          "Remplir la chaudière en utilisant le circuit SER et ouvrir les évents HV701 et HV702.",
-          "Mettre en service les pompes API et APB.",
-          "Remplir les ballons HP et BP jusqu'aux niveaux de démarrage spécifiés : HP = -475 mm + 150 mm, BP = -580 mm + 100 mm.",
-          "Ouvrir les vannes motorisées d'évent FSR UV008 et FLB UV008.",
-          "Ouvrir les vannes de purge de pot de condensat FSR UV010 et FLB UV010.",
-        ],
-      },
-      {
-        id: 2,
-        titre: "Conditions d'armement de la chaudière",
-        description: "Vérifiez les conditions d'armement de la chaudière.",
-        sousEtapes: [
-          "La chaudière est considérée comme armée lorsque le registre est ouvert.",
-          "La turbine à vapeur (TV) est armée lorsque les vannes d'arrêt sont ouvertes.",
-        ],
-      },
-      {
-        id: 3,
-        titre: "Sécurité chaudière (FSE)",
-        description: "Assurez-vous que toutes les conditions de sécurité sont remplies.",
-        sousEtapes: [
-          "La turbine à gaz associée doit être synchronisée.",
-          "Au moins une pompe API et une pompe APB doivent être en service.",
-          "Une pompe CEX doit être en service.",
-          "Une pompe FSR doit être en service avec une pression correcte.",
-          "Une pompe FLB doit être en service avec une pression correcte.",
-          "Le niveau de gonflement des ballons HP et BP doit être détecté : HP = -475 mm, BP = -580 mm.",
-          "Absence d'eau dans le pot de condensat de vapeur de surchauffe HP et BP.",
-        ],
-      },
-      {
-        id: 4,
-        titre: "Conditions de disponibilité de contournement",
-        description: "Vérifiez les conditions de disponibilité de contournement.",
-        sousEtapes: [
-          "La chaudière doit être armée.",
-          "Le registre de la chaudière ne doit pas être fermé.",
-          "Aucun défaut sur l'unité hydraulique.",
-          "L'armoire de contournement doit être en service (ON).",
-          "La pression de l'eau de désurchauffe doit être correcte (P < 16 bars).",
-          "Au moins un demi-condenseur doit être réfrigéré (vannes d'entrée et de sortie ouvertes).",
-          "Le vide du condenseur doit être correct (pression inférieure à 300 mbar).",
-          "La température de la vapeur surchauffée doit être élevée (> 300°C).",
-        ],
-      },
-      {
-        id: 5,
-        titre: "Démarrage du groupe CET",
-        description: "Suivez les étapes pour démarrer le groupe CET.",
-        sousEtapes: [
-          "Lorsque la pression SVA est à 7 bars et la température à 250°C, le groupe CET s'ouvre.",
-          "Le groupe CET déclenche (ouverture de la vanne SVA) à P = 11 bars et T = 325°C.",
-          "Les paramètres de démarrage du groupe CET sont : 180°C et 1.2 bars.",
-          "Mettre en service le groupe CV1 :",
-          "   - À 1 bar, l'éjecteur de démarrage se met en marche.",
-          "   - À 250 mbar, l'éjecteur d'entretien se met en service.",
-          "   - À 150 mbar, l'éjecteur de démarrage s'arrête.",
-        ],
-      },
-      {
-        id: 6,
-        titre: "Couplage des chaudières",
-        description: "Suivez les étapes pour coupler les chaudières.",
-        sousEtapes: [
-          "Conditions d'ouverture de la vanne d'isolement HP UV001/UV002 :",
-          "   - T ≥ 450°C au niveau du capteur BXVVPTSHQ01 ou BLVVPTSHQ01.",
-          "   - ΔP ≤ 2 bars.",
-          "Conditions d'ouverture de la vanne d'isolement BP UV001/UV002 :",
-          "   - T ≥ 175°C au niveau du capteur BXVVPTSHQ02 ou BLVVPTSHQ02.",
-          "   - ΔP ≤ 0.5 bars.",
-          "Confirmer la fin de disposition de la chaudière avec le chimiste.",
-        ],
-      },
-    ],
-    [] // Aucune dépendance, le tableau est constant
+  // Vérifier la disponibilité du microphone
+  useEffect(() => {
+    const verifierMicrophone = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const microphoneExiste = devices.some((device) => device.kind === 'audioinput');
+        setMicrophoneDisponible(microphoneExiste);
+      } catch (err) {
+        console.error('Erreur lors de la vérification du microphone:', err);
+        setMicrophoneDisponible(false);
+      }
+    };
+
+    verifierMicrophone();
+  }, []);
+
+  // Fonction pour lire une sous-étape
+  const lireSousEtape = useCallback(
+    (index: number) => {
+      if (lectureEnCours) return; // Ne pas lancer une nouvelle lecture si une lecture est déjà en cours
+
+      const sousEtape = etapes[etapeActuelle - 1].sousEtapes[index];
+      const texteAVoix = `Sous-étape ${index + 1}: ${sousEtape}`;
+      speak(texteAVoix, () => {
+        setLectureEnCours(false); // Marquer la lecture comme terminée
+        setSousEtapeActuelle(null); // Réinitialiser la sous-étape actuelle
+      });
+      setLectureEnCours(true); // Marquer la lecture comme en cours
+      setSousEtapeActuelle(index); // Mettre à jour la sous-étape actuellement lue
+    },
+    [etapeActuelle, speak, lectureEnCours]
   );
+
+  // Fonction pour lire l'étape actuelle (titre et description)
+  const lireEtapeActuelle = useCallback(() => {
+    if (lectureEnCours) return; // Ne pas lancer une nouvelle lecture si une lecture est déjà en cours
+
+    const etape = etapes[etapeActuelle - 1];
+    const texteAVoix = `Étape ${etape.id}: ${etape.titre}. ${etape.description}`;
+    speak(texteAVoix, () => {
+      setLectureEnCours(false); // Marquer la lecture comme terminée
+      setSousEtapeActuelle(null); // Réinitialiser la sous-étape actuelle
+    });
+    setLectureEnCours(true); // Marquer la lecture comme en cours
+  }, [etapeActuelle, speak, lectureEnCours]);
 
   // Gérer les commandes vocales
   const handleVoiceCommand = useCallback(() => {
-    if (transcript.includes('suivant')) {
-      setEtapeActuelle((prev) => (prev < etapes.length ? prev + 1 : prev));
-    } else if (transcript.includes('précédent')) {
-      setEtapeActuelle((prev) => (prev > 1 ? prev - 1 : prev));
+    if (transcript.toLowerCase().includes('suivant') && !lectureEnCours) {
+      if (sousEtapeActuelle === null) {
+        lireSousEtape(0); // Commencer la première sous-étape
+      } else if (sousEtapeActuelle < etapes[etapeActuelle - 1].sousEtapes.length - 1) {
+        lireSousEtape(sousEtapeActuelle + 1); // Passer à la sous-étape suivante
+      } else {
+        setEtapeActuelle((prev) => (prev < etapes.length ? prev + 1 : prev)); // Passer à l'étape suivante
+      }
+      stopListening(); // Arrêter l'écoute après avoir traité la commande
+    } else if (transcript.toLowerCase().includes('précédent') && !lectureEnCours) {
+      if (sousEtapeActuelle !== null && sousEtapeActuelle > 0) {
+        lireSousEtape(sousEtapeActuelle - 1); // Revenir à la sous-étape précédente
+      } else {
+        setEtapeActuelle((prev) => (prev > 1 ? prev - 1 : prev)); // Revenir à l'étape précédente
+      }
+      stopListening(); // Arrêter l'écoute après avoir traité la commande
     }
-  }, [transcript, etapes.length]);
+  }, [transcript, lectureEnCours, stopListening, sousEtapeActuelle, etapeActuelle, lireSousEtape]);
 
-  // Lire à haute voix l'étape actuelle et ses sous-étapes
-  useEffect(() => {
-    if (etapeActuelle) {
-      const etape = etapes[etapeActuelle - 1];
-      const texteAVoix = `Étape ${etape.id}: ${etape.titre}. ${etape.description}. Sous-étapes: ${etape.sousEtapes.join('. ')}`;
-      speak(texteAVoix);
+  // Activer une sous-étape
+  const activerSousEtape = (index: number) => {
+    if (!sousEtapesActivees.includes(index)) {
+      setSousEtapesActivees((prev) => [...prev, index]);
     }
-  }, [etapeActuelle, etapes, speak]);
+    lireSousEtape(index); // Lire la sous-étape cliquée
+  };
+
+  // Démarrer l'application
+  const demarrerApplication = () => {
+    setApplicationDemarree(true);
+    if (microphoneDisponible) {
+      startListening();
+    }
+    lireEtapeActuelle(); // Lire l'étape actuelle
+  };
+
+  // Passer à l'étape suivante
+  const passerAEtapeSuivante = () => {
+    if (!lectureEnCours) {
+      setEtapeActuelle((prev) => (prev < etapes.length ? prev + 1 : prev));
+    }
+  };
 
   // Appeler handleVoiceCommand chaque fois que le transcript change
   useEffect(() => {
-    handleVoiceCommand();
-  }, [transcript, handleVoiceCommand]);
+    if (microphoneDisponible) {
+      handleVoiceCommand();
+    }
+  }, [transcript, handleVoiceCommand, microphoneDisponible]);
+
+  // Lire l'étape actuelle uniquement lors du démarrage ou du changement d'étape
+  useEffect(() => {
+    if (applicationDemarree && !lectureEnCours) {
+      lireEtapeActuelle();
+    }
+  }, [etapeActuelle, applicationDemarree]); // Retirer lectureEnCours des dépendances pour éviter les boucles
 
   return (
     <div className="flex min-h-screen bg-gray-100 p-8">
       <div className="w-full max-w-2xl mx-auto bg-white p-6 rounded-lg shadow">
         <h1 className="text-2xl font-bold mb-4">Copilote de démarrage de centrale</h1>
-        {error && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-            Erreur : {error === 'not-allowed' ? "Accès au microphone refusé. Veuillez autoriser l'accès au microphone." : error}
-          </div>
+        {!applicationDemarree ? (
+          <>
+            <button
+              onClick={demarrerApplication}
+              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+            >
+              Démarrer la reconnaissance vocale
+            </button>
+            {!microphoneDisponible && (
+              <p className="mt-4 text-red-500">
+                Le microphone n&apos;est pas disponible. L&apos;interaction vocale est désactivée.
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            <EtapeComponent
+              etape={etapes[etapeActuelle - 1]}
+              sousEtapesActivees={sousEtapesActivees}
+              activerSousEtape={activerSousEtape}
+              onEtapeClick={passerAEtapeSuivante}
+            />
+            <NavigationButtons
+              etapeActuelle={etapeActuelle}
+              etapesLength={etapes.length}
+              onPrecedent={() => {
+                if (!lectureEnCours) {
+                  setEtapeActuelle((prev) => (prev > 1 ? prev - 1 : prev));
+                }
+              }}
+              onSuivant={passerAEtapeSuivante}
+              lectureEnCours={lectureEnCours}
+            />
+            {microphoneDisponible && (
+              <VoiceRecognition
+                isListening={isListening}
+                startListening={startListening}
+                stopListening={stopListening}
+                transcript={transcript}
+                error={error}
+              />
+            )}
+          </>
         )}
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold">{etapes[etapeActuelle - 1].titre}</h2>
-          <p className="mt-2 text-gray-700">{etapes[etapeActuelle - 1].description}</p>
-          <div className="mt-4">
-            <h3 className="text-lg font-medium">Sous-étapes :</h3>
-            <ul className="list-disc list-inside mt-2">
-              {etapes[etapeActuelle - 1].sousEtapes.map((sousEtape, index) => (
-                <li key={index} className="text-gray-600">
-                  {sousEtape}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        <div className="flex justify-between">
-          <button
-            onClick={() => setEtapeActuelle((prev) => (prev > 1 ? prev - 1 : prev))}
-            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-          >
-            Précédent
-          </button>
-          <button
-            onClick={() => setEtapeActuelle((prev) => (prev < etapes.length ? prev + 1 : prev))}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Suivant
-          </button>
-        </div>
-        <div className="mt-6">
-          <button
-            onClick={isListening ? stopListening : startListening}
-            className={`px-4 py-2 ${isListening ? 'bg-red-500' : 'bg-green-500'
-              } text-white rounded hover:opacity-80`}
-          >
-            {isListening ? 'Arrêter la reconnaissance vocale' : 'Démarrer la reconnaissance vocale'}
-          </button>
-          <p className="mt-2 text-gray-600">Transcript: {transcript}</p>
-        </div>
       </div>
     </div>
   );
