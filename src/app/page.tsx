@@ -1,8 +1,5 @@
 // src/app/page.tsx
-'use client'; // Indique que ce composant est côté client
-
-import { useState, useEffect } from 'react'; // Ajoutez useEffect
-import useSpeechRecognition from '../hooks/useSpeechRecognition';
+import { useState, useEffect, useCallback } from 'react'; // Ajoutez useCallback
 
 export default function Home() {
   const [etapeActuelle, setEtapeActuelle] = useState(1);
@@ -16,19 +13,19 @@ export default function Home() {
     { id: 5, titre: "Conditions de contournement", description: "Vérifiez les conditions de contournement." },
   ];
 
-  // Gérer les commandes vocales
-  const handleVoiceCommand = () => {
+  // Gérer les commandes vocales avec useCallback
+  const handleVoiceCommand = useCallback(() => {
     if (transcript.includes('suivant')) {
       setEtapeActuelle((prev) => (prev < etapes.length ? prev + 1 : prev));
     } else if (transcript.includes('précédent')) {
       setEtapeActuelle((prev) => (prev > 1 ? prev - 1 : prev));
     }
-  };
+  }, [transcript, etapes.length]);
 
   // Appeler handleVoiceCommand chaque fois que le transcript change
   useEffect(() => {
     handleVoiceCommand();
-  }, [transcript]); // Déclenché lorsque le transcript est mis à jour
+  }, [transcript, handleVoiceCommand]); // Ajoutez handleVoiceCommand aux dépendances
 
   return (
     <div className="flex min-h-screen bg-gray-100 p-8">
