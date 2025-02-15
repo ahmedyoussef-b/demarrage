@@ -1,5 +1,8 @@
 // src/app/page.tsx
+'use client'; // Indique que ce composant est côté client
+
 import { useState, useEffect, useCallback } from 'react'; // Ajoutez useCallback
+import useSpeechRecognition from '../hooks/useSpeechRecognition';
 
 export default function Home() {
   const [etapeActuelle, setEtapeActuelle] = useState(1);
