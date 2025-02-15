@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import useSpeechRecognition from '../hooks/useSpeechRecognition';
 import useSpeechSynthesis from '../hooks/useSpeechSynthesis';
-import etapes from '../data/etapes';
+import  etapes  from '../data/etapes';
 import EtapeComponent from '../components/EtapeComponent';
 import NavigationButtons from '../components/NavigationButtons';
 import VoiceRecognition from '../components/VoiceRecognition';
@@ -142,6 +142,12 @@ export default function Home() {
                 Le microphone n&apos;est pas disponible. L&apos;interaction vocale est désactivée.
               </p>
             )}
+            <button
+              onClick={() => speak("Ceci est un test de synthèse vocale.")}
+              className="px-4 py-2 bg-blue-500 text-white rounded mt-4"
+            >
+              Tester la synthèse vocale
+            </button>
           </>
         ) : (
           <>
