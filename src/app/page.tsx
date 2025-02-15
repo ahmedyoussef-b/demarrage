@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import useSpeechRecognition from '../hooks/useSpeechRecognition';
 import useSpeechSynthesis from '../hooks/useSpeechSynthesis';
-import  etapes  from '../data/etapes';
+import etapes  from '../data/etapes';
 import EtapeComponent from '../components/EtapeComponent';
 import NavigationButtons from '../components/NavigationButtons';
 import VoiceRecognition from '../components/VoiceRecognition';
@@ -43,6 +43,7 @@ export default function Home() {
 
       const sousEtape = etapes[etapeActuelle - 1].sousEtapes[index];
       const texteAVoix = `Sous-étape ${index + 1}: ${sousEtape}`;
+      console.log("Texte à lire :", texteAVoix); // Log pour déboguer
       speak(texteAVoix, () => {
         setLectureEnCours(false); // Marquer la lecture comme terminée
         setSousEtapeActuelle(null); // Réinitialiser la sous-étape actuelle
@@ -59,6 +60,7 @@ export default function Home() {
 
     const etape = etapes[etapeActuelle - 1];
     const texteAVoix = `Étape ${etape.id}: ${etape.titre}. ${etape.description}`;
+    console.log("Texte à lire :", texteAVoix); // Log pour déboguer
     speak(texteAVoix, () => {
       setLectureEnCours(false); // Marquer la lecture comme terminée
       setSousEtapeActuelle(null); // Réinitialiser la sous-étape actuelle
@@ -143,7 +145,10 @@ export default function Home() {
               </p>
             )}
             <button
-              onClick={() => speak("Ceci est un test de synthèse vocale.")}
+              onClick={() => {
+                console.log("Bouton de test cliqué"); // Log pour déboguer
+                speak("Ceci est un test de synthèse vocale.");
+              }}
               className="px-4 py-2 bg-blue-500 text-white rounded mt-4"
             >
               Tester la synthèse vocale
