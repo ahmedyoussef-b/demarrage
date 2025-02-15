@@ -1,9 +1,10 @@
+// src/app/page.tsx
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import useSpeechRecognition from '../hooks/useSpeechRecognition';
 import useSpeechSynthesis from '../hooks/useSpeechSynthesis';
-import etapes  from '../data/etapes';
+import etapes from '../data/etapes';
 import EtapeComponent from '../components/EtapeComponent';
 import NavigationButtons from '../components/NavigationButtons';
 import VoiceRecognition from '../components/VoiceRecognition';
@@ -122,7 +123,7 @@ export default function Home() {
     if (applicationDemarree && !lectureEnCours) {
       lireEtapeActuelle();
     }
-  }, [etapeActuelle, applicationDemarree]); // Retirer lectureEnCours des dépendances pour éviter les boucles
+  }, [etapeActuelle, applicationDemarree]);
 
   return (
     <div className="flex min-h-screen bg-gray-100 p-8">
