@@ -1,30 +1,34 @@
 'use client';
 
 import { useState } from 'react';
+import axios from 'axios';
 import { askChatGPT } from '../services/openaiService';
 
 interface ChatComponentProps {
     onResponse: (response: string) => void; // Callback pour la réponse vocale
+    context: string; // Contexte des étapes et sous-étapes
 }
 
-const ChatComponent = ({ onResponse }: ChatComponentProps) => {
+const ChatComponent = ({ onResponse, context }: ChatComponentProps) => {
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!input.trim()) return;
+        if (!input.trim() || isLoading) return;
 
         setIsLoading(true);
+        setError(null);
 
         try {
             // Ajouter le message de l'utilisateur
             const userMessage = { role: 'user', content: input };
             setMessages((prev) => [...prev, userMessage]);
 
-            // Envoyer la requête à ChatGPT
-            const response = await askChatGPT(input);
+            // Envoyer la requête à ChatGPT avec le contexte
+            const response = await askChatGPT(input, context);
 
             // Ajouter la réponse de ChatGPT
             const botMessage = { role: 'assistant', content: response };
@@ -34,10 +38,10 @@ const ChatComponent = ({ onResponse }: ChatComponentProps) => {
             onResponse(response);
         } catch (error) {
             console.error('Erreur lors de la communication avec ChatGPT :', error);
-            setMessages((prev) => [...prev, { role: 'assistant', content: 'Une erreur est survenue. Veuillez réessayer.' }]);
+            setError('Une erreur est survenue. Veuillez réessayer.');
         } finally {
             setIsLoading(false);
-            setInput(''); // Réinitialiser l'input
+            setInput('');
         }
     };
 
@@ -54,6 +58,8 @@ const ChatComponent = ({ onResponse }: ChatComponentProps) => {
                     </div>
                 ))}
             </div>
+
+            {error && <p className="text-red-500 mb-4">{error}</p>}
 
             <form onSubmit={handleSubmit} className="flex">
                 <input
