@@ -1,4 +1,94 @@
 'use client';
+import { useState, useCallback } from 'react';
+import useSpeechSynthesis from '../hooks/useSpeechSynthesis';
+import etapes from '../data/etapes';
+import EtapeComponent from '../components/EtapeComponent';
+import Modal from '../components/Modal';
+import ChatComponent from '../components/ChatComponent';
+
+export default function Home() {
+  const [etapeActuelle, setEtapeActuelle] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { speak } = useSpeechSynthesis();
+
+  // Formater les étapes et sous-étapes en texte pour ChatGPT
+  const formatContextForChatGPT = useCallback(() => {
+    let context = "Voici les étapes et sous-étapes de l'application :\n";
+    etapes.forEach((etape) => {
+      context += `Étape ${etape.id}: ${etape.titre}\n`;
+      context += `Description: ${etape.description}\n`;
+      context += "Sous-étapes :\n";
+      etape.sousEtapes.forEach((sousEtape, index) => {
+        context += `  ${index + 1}. ${sousEtape}\n`;
+      });
+      context += "\n";
+    });
+    return context;
+  }, []);
+
+  // Passer à l'étape suivante
+  const nextEtape = () => {
+    if (etapeActuelle < etapes.length) {
+      setEtapeActuelle((prev) => prev + 1);
+    }
+  };
+
+  // Revenir à l'étape précédente
+  const previousEtape = () => {
+    if (etapeActuelle > 1) {
+      setEtapeActuelle((prev) => prev - 1);
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen bg-gray-100 p-8">
+      <div className="w-full max-w-2xl mx-auto bg-white p-6 rounded-lg shadow">
+        <h1 className="text-2xl font-bold mb-4">Copilote de démarrage de centrale</h1>
+
+        {/* Afficher l'étape actuelle */}
+        <EtapeComponent etape={etapes[etapeActuelle - 1]} />
+
+        {/* Boutons de navigation */}
+        <div className="flex justify-between mt-4">
+          <button
+            onClick={previousEtape}
+            disabled={etapeActuelle === 1}
+            className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-400"
+          >
+            Étape précédente
+          </button>
+          <button
+            onClick={nextEtape}
+            disabled={etapeActuelle === etapes.length}
+            className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-400"
+          >
+            Étape suivante
+          </button>
+        </div>
+
+        {/* Bouton pour ouvrir la modale ChatGPT */}
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="px-4 py-2 bg-purple-500 text-white rounded mt-4"
+        >
+          Ouvrir l&apos;assistant ChatGPT
+        </button>
+
+        {/* Modale pour ChatGPT */}
+        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+          <ChatComponent
+            onResponse={(response) => {
+              speak(response); // Lire la réponse de ChatGPT à voix haute
+            }}
+            context={formatContextForChatGPT()} // Passer le contexte des étapes
+          />
+        </Modal>
+      </div>
+    </div>
+  );
+}
+
+
 {/*}
 import { useState, useEffect, useCallback } from 'react';
 import useSpeechRecognition from '../hooks/useSpeechRecognition';
@@ -197,60 +287,3 @@ export default function Home() {
   );
 }
   */}
-
-import { useState, useCallback } from 'react';
-import useSpeechSynthesis from '../hooks/useSpeechSynthesis';
-import etapes from '../data/etapes';
-import EtapeComponent from '../components/EtapeComponent';
-import Modal from '../components/Modal';
-import ChatComponent from '../components/ChatComponent';
-
-export default function Home() {
-  const [etapeActuelle, setEtapeActuelle] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const { speak } = useSpeechSynthesis();
-
-  // Formater les étapes et sous-étapes en texte pour ChatGPT
-  const formatContextForChatGPT = useCallback(() => {
-    let context = "Voici les étapes et sous-étapes de l'application :\n";
-    etapes.forEach((etape) => {
-      context += `Étape ${etape.id}: ${etape.titre}\n`;
-      context += `Description: ${etape.description}\n`;
-      context += "Sous-étapes :\n";
-      etape.sousEtapes.forEach((sousEtape, index) => {
-        context += `  ${index + 1}. ${sousEtape}\n`;
-      });
-      context += "\n";
-    });
-    return context;
-  }, []);
-
-  return (
-    <div className="flex min-h-screen bg-gray-100 p-8">
-      <div className="w-full max-w-2xl mx-auto bg-white p-6 rounded-lg shadow">
-        <h1 className="text-2xl font-bold mb-4">Copilote de démarrage de centrale</h1>
-
-        {/* Afficher l'étape actuelle */}
-        <EtapeComponent etape={etapes[etapeActuelle - 1]} />
-
-        {/* Bouton pour ouvrir la modale ChatGPT */}
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 bg-purple-500 text-white rounded mt-4"
-        >
-          Ouvrir l&apos;assistant ChatGPT
-        </button>
-
-        {/* Modale pour ChatGPT */}
-        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-          <ChatComponent
-            onResponse={(response) => {
-              speak(response); // Lire la réponse de ChatGPT à voix haute
-            }}
-            context={formatContextForChatGPT()} // Passer le contexte des étapes
-          />
-        </Modal>
-      </div>
-    </div>
-  );
-}

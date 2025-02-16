@@ -1,5 +1,4 @@
-// hooks/useSpeechRecognition.ts
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 declare global {
   interface Window {
@@ -35,13 +34,14 @@ interface SpeechRecognition extends EventTarget {
   onend: () => void;
 }
 
-const useSpeechRecognition = () => {
-  const [transcript, setTranscript] = useState(""); // Texte transcrit
-  const [isListening, setIsListening] = useState(false); // État de l'écoute
-  const [error, setError] = useState<string | null>(null); // Gestion des erreurs
+const useSpeechRecognition = (lang = "fr-FR") => {
+  const [transcript, setTranscript] = useState("");
+  const [interimTranscript, setInterimTranscript] = useState("");
+  const [isListening, setIsListening] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
-    // Vérifier si l'API SpeechRecognition est disponible
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -50,34 +50,32 @@ const useSpeechRecognition = () => {
       return;
     }
 
-    // Initialiser la reconnaissance vocale
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true; // Continue à écouter même après une pause
-    recognition.interimResults = true; // Affiche les résultats intermédiaires
-    recognition.lang = "fr-FR"; // Langue française
+    recognitionRef.current = new SpeechRecognition();
+    const recognition = recognitionRef.current;
 
-    // Gérer les résultats de la reconnaissance vocale
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = lang;
+
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let interimTranscript = "";
+      let interim = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcriptPart = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
           setTranscript((prev) => prev + transcriptPart + " ");
         } else {
-          interimTranscript += transcriptPart;
+          interim += transcriptPart;
         }
       }
-      console.log("Interim Transcript:", interimTranscript);
+      setInterimTranscript(interim);
     };
 
-    // Gérer les erreurs
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error("Erreur de reconnaissance vocale:", event.error);
-      setError(event.error); // Enregistrer l'erreur
-      setIsListening(false); // Arrêter l'écoute en cas d'erreur
+      setError(`Erreur: ${event.error} - ${event.message}`);
+      setIsListening(false);
     };
 
-    // Redémarrer la reconnaissance vocale si elle s'arrête
     recognition.onend = () => {
       if (isListening) {
         console.log("Redémarrage de la reconnaissance vocale...");
@@ -85,37 +83,29 @@ const useSpeechRecognition = () => {
       }
     };
 
-    // Démarrer ou arrêter la reconnaissance vocale en fonction de l'état
-    if (isListening) {
-      recognition.start();
-    } else {
-      recognition.stop();
-    }
-
-    // Nettoyer à la fin
     return () => {
       recognition.stop();
     };
-  }, [isListening]);
+  }, [isListening, lang]);
 
-  // Fonction pour démarrer l'écoute
   const startListening = () => {
-    setTranscript(""); // Réinitialiser le transcript
-    setError(null); // Réinitialiser les erreurs
+    setTranscript("");
+    setInterimTranscript("");
+    setError(null);
     setIsListening(true);
   };
 
-  // Fonction pour arrêter l'écoute
   const stopListening = () => {
     setIsListening(false);
   };
 
   return {
-    transcript, // Texte transcrit
-    isListening, // État de l'écoute
-    error, // Erreur de reconnaissance vocale
-    startListening, // Fonction pour démarrer l'écoute
-    stopListening, // Fonction pour arrêter l'écoute
+    transcript,
+    interimTranscript,
+    isListening,
+    error,
+    startListening,
+    stopListening,
   };
 };
 
